@@ -1,7 +1,12 @@
 // MangaDex API client — https://api.mangadex.org/docs/
 // All app data flows through this module.
 
-const API = 'https://api.mangadex.org'
+// MangaDex only allows browser CORS from localhost, so anywhere else
+// (phone on LAN, deployed site) calls go through a same-origin '/md-api'
+// proxy — the Vite dev server provides it; production hosts need their own.
+const API = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+  ? 'https://api.mangadex.org'
+  : '/md-api'
 const COVERS = 'https://uploads.mangadex.org/covers'
 
 // Keep it comfortable for a general audience.
