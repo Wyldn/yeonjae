@@ -1,4 +1,7 @@
 {
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "rewrites": [
     { "source": "/md-api/:path*", "destination": "https://api.mangadex.org/:path*" }
   ]
