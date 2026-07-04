@@ -418,6 +418,7 @@ h2 { font-size: 1.05rem; font-weight: 650; letter-spacing: -0.01em; }
 .auth-box { display: flex; flex-direction: column; gap: 10px; max-width: 360px; margin-bottom: 18px; }
 .auth-actions { display: flex; gap: 10px; }
 .error { color: #f87171; }
+.notice { color: #4ade80; }
 .local-note { margin-bottom: 12px; }
 .comment-list { display: flex; flex-direction: column; gap: 14px; }
 .comment {

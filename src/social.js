@@ -39,7 +39,8 @@ export async function signUp(email, password, username) {
     options: { data: { username } },
   })
   if (error) throw error
-  return data.user
+  // With email confirmation enabled, there's no session until the link is clicked
+  return { user: data.user, needsConfirm: !data.session }
 }
 
 export async function signOut() {
