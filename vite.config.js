@@ -14,6 +14,6 @@ export default defineConfig(({ command }) => ({
       },
     },
   },
-  // Deployed under https://<user>.github.io/yeonjae/
-  base: command === 'build' ? '/yeonjae/' : '/',
+  // GitHub Pages serves under /yeonjae/; Vercel (and local preview) serve from root
+  base: command === 'build' && process.env.GITHUB_ACTIONS ? '/yeonjae/' : '/',
 }))

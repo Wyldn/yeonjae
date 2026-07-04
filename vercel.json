@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/md-api/:path*", "destination": "https://api.mangadex.org/:path*" }
+  ]
+}
