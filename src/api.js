@@ -196,8 +196,17 @@ export async function fetchByIds(ids) {
   return withStats(res.data)
 }
 
-// Full English chapter list: hosted chapters only (licensed titles point
-// externally and can't be read in-app), deduped by chapter number.
+function platformName(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '').split('.')[0]
+  } catch {
+    return 'official site'
+  }
+}
+
+// Full English chapter list, deduped by chapter number. Chapters hosted on
+// MangaDex are readable in-app; licensed/delisted chapters keep their official
+// platform links (Tappytoon, MangaPlus, …) so the list stays complete.
 export async function fetchChapters(mangaId) {
   const all = []
   let offset = 0
@@ -206,8 +215,6 @@ export async function fetchChapters(mangaId) {
     const res = await get(`/manga/${mangaId}/feed`, {
       translatedLanguage: ['en'],
       contentRating: CONTENT_RATINGS,
-      includeExternalUrl: 0,
-      includeEmptyPages: 0,
       'order[chapter]': 'desc',
       includes: ['scanlation_group'],
       limit: 500,
@@ -220,21 +227,40 @@ export async function fetchChapters(mangaId) {
   const byNumber = new Map()
   for (const c of all) {
     const a = c.attributes
-    if (!a.pages) continue
     const num = a.chapter === null ? 'oneshot' : a.chapter
-    if (byNumber.has(num)) continue // feed is ordered; keep first (newest upload)
-    byNumber.set(num, {
-      id: c.id,
-      number: num,
-      numeric: a.chapter === null ? 0 : parseFloat(a.chapter),
-      title: a.title || '',
-      pages: a.pages,
-      publishAt: a.publishAt,
-      group: c.relationships?.find((r) => r.type === 'scanlation_group')?.attributes?.name || '',
-    })
+    let entry = byNumber.get(num)
+    if (!entry) {
+      entry = {
+        number: num,
+        numeric: a.chapter === null ? 0 : parseFloat(a.chapter),
+        title: '',
+        publishAt: a.publishAt,
+        readable: false,
+        links: [], // official platforms for non-hosted chapters
+      }
+      byNumber.set(num, entry)
+    }
+    entry.title ||= a.title || ''
+    const hosted = a.pages > 0 && !a.externalUrl && !a.isUnavailable
+    if (hosted && !entry.readable) {
+      Object.assign(entry, {
+        readable: true,
+        id: c.id,
+        pages: a.pages,
+        publishAt: a.publishAt,
+        group: c.relationships?.find((r) => r.type === 'scanlation_group')?.attributes?.name || '',
+      })
+    } else if (a.externalUrl) {
+      const name = platformName(a.externalUrl)
+      if (!entry.links.some((l) => l.name === name)) {
+        entry.links.push({ url: a.externalUrl, name })
+      }
+    }
   }
-  // ascending by chapter number; reader walks this array for prev/next
-  return [...byNumber.values()].sort((a, b) => a.numeric - b.numeric)
+  // ascending by chapter number; the reader walks the readable subset
+  return [...byNumber.values()]
+    .filter((c) => c.readable || c.links.length)
+    .sort((a, b) => a.numeric - b.numeric)
 }
 
 export async function fetchPages(chapterId) {

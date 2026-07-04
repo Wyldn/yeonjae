@@ -284,6 +284,14 @@ h2 { font-size: 1.05rem; font-weight: 650; letter-spacing: -0.01em; }
 .chapter-row.read::after { content: '✓'; color: var(--accent); font-size: 0.75rem; }
 .chapter-num { flex: 1; font-size: 0.88rem; font-weight: 500; }
 .chapter-date { width: 70px; text-align: right; }
+.chapter-row.external:hover { background: none; }
+.chapter-row.external .chapter-num { color: var(--muted); }
+.chapter-links { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.platform-link {
+  font-size: 0.75rem; color: #a78bfa; text-transform: capitalize; white-space: nowrap;
+}
+.platform-link:hover { text-decoration: underline; }
+.licensed-note { margin-bottom: 10px; }
 
 /* ---- History ---- */
 .history-list { display: flex; flex-direction: column; gap: 10px; }

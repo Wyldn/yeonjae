@@ -17,11 +17,12 @@ export default function Reader({ id, chapterId }) {
 
   const { data, error, loading, retry } = useAsync(
     async () => {
-      const [title, chapters, pages] = await Promise.all([
+      const [title, allChapters, pages] = await Promise.all([
         fetchTitle(id),
         fetchChapters(id),
         fetchPages(chapterId),
       ])
+      const chapters = allChapters.filter((c) => c.readable)
       const index = chapters.findIndex((c) => c.id === chapterId)
       return { title, chapters, pages, index }
     },

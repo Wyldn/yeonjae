@@ -30,8 +30,10 @@ export default function Title({ id }) {
   const prog = progress[id]
   const readUpTo = prog ? parseFloat(prog.chapterNum) || 0 : -Infinity
   const shown = order === 'desc' ? [...chapters].reverse() : chapters
-  const firstChapter = chapters[0]
-  const continueChapter = prog && chapters.find((c) => c.id === prog.chapterId)
+  const readable = chapters.filter((c) => c.readable)
+  const firstChapter = readable[0]
+  const continueChapter = prog && readable.find((c) => c.id === prog.chapterId)
+  const firstExternal = chapters.find((c) => c.links.length)
 
   return (
     <div className="page title-page">
@@ -58,13 +60,17 @@ export default function Title({ id }) {
               ))}
             </div>
             <div className="title-actions">
-              {chapters.length > 0 && (
+              {firstChapter ? (
                 <Link
                   to={`/read/${id}/${continueChapter ? continueChapter.id : firstChapter.id}`}
                   className="btn primary"
                 >
                   {continueChapter ? `Continue Ch. ${continueChapter.number}` : 'Start reading'}
                 </Link>
+              ) : firstExternal && (
+                <a href={firstExternal.links[0].url} target="_blank" rel="noreferrer" className="btn primary">
+                  Read on {firstExternal.links[0].name} ↗
+                </a>
               )}
               <button
                 className={'btn ghost' + (inLibrary ? ' saved' : '')}
@@ -92,29 +98,47 @@ export default function Title({ id }) {
             </button>
           )}
         </div>
+        {readable.length === 0 && chapters.length > 0 && (
+          <p className="muted small licensed-note">
+            This title is licensed — chapters open on the publisher’s official platform.
+          </p>
+        )}
         {chapters.length === 0 ? (
           <div className="empty">
-            <p>
-              No chapters are hosted on MangaDex for this title — it’s likely licensed,
-              with chapters available on the publisher’s official platform.
-            </p>
+            <p>No English chapters are listed for this title yet.</p>
           </div>
         ) : (
           <div className="chapter-list">
-            {shown.map((c) => (
-              <Link
-                key={c.id}
-                to={`/read/${id}/${c.id}`}
-                className={'chapter-row' + (c.numeric <= readUpTo ? ' read' : '')}
-              >
-                <span className="chapter-num">
-                  {c.number === 'oneshot' ? 'Oneshot' : `Chapter ${c.number}`}
-                  {c.title && <span className="muted chapter-name"> — {c.title}</span>}
-                </span>
-                {c.group && <span className="muted small chapter-group">{c.group}</span>}
-                <span className="muted small chapter-date">{timeAgo(c.publishAt)}</span>
-              </Link>
-            ))}
+            {shown.map((c) =>
+              c.readable ? (
+                <Link
+                  key={c.number}
+                  to={`/read/${id}/${c.id}`}
+                  className={'chapter-row' + (c.numeric <= readUpTo ? ' read' : '')}
+                >
+                  <span className="chapter-num">
+                    {c.number === 'oneshot' ? 'Oneshot' : `Chapter ${c.number}`}
+                    {c.title && <span className="muted chapter-name"> — {c.title}</span>}
+                  </span>
+                  {c.group && <span className="muted small chapter-group">{c.group}</span>}
+                  <span className="muted small chapter-date">{timeAgo(c.publishAt)}</span>
+                </Link>
+              ) : (
+                <div key={c.number} className="chapter-row external">
+                  <span className="chapter-num">
+                    {c.number === 'oneshot' ? 'Oneshot' : `Chapter ${c.number}`}
+                    {c.title && <span className="muted chapter-name"> — {c.title}</span>}
+                  </span>
+                  <span className="chapter-links">
+                    {c.links.map((l) => (
+                      <a key={l.name} href={l.url} target="_blank" rel="noreferrer" className="platform-link">
+                        {l.name} ↗
+                      </a>
+                    ))}
+                  </span>
+                </div>
+              )
+            )}
           </div>
         )}
       </section>
