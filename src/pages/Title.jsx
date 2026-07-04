@@ -4,6 +4,7 @@ import { fetchTitle, fetchChapters, fetchSimilar, snapshotOf, timeAgo, compactNu
 import { useStore, store } from '../store.js'
 import { useAsync, Loading, LoadError } from '../useAsync.jsx'
 import TitleCard, { Cover } from '../components/TitleCard.jsx'
+import Comments from '../components/Comments.jsx'
 
 export default function Title({ id }) {
   const { library, progress } = useStore()
@@ -151,6 +152,8 @@ export default function Title({ id }) {
           </div>
         </section>
       )}
+
+      <Comments titleId={id} />
     </div>
   )
 }

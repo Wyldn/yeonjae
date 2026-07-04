@@ -8,6 +8,7 @@ import Title from './pages/Title.jsx'
 import Reader from './pages/Reader.jsx'
 import Library from './pages/Library.jsx'
 import History from './pages/History.jsx'
+import Profile from './pages/Profile.jsx'
 import './styles.css'
 
 function App() {
@@ -26,12 +27,16 @@ function App() {
   else if (parts[0] === 'read' && parts[1] && parts[2]) page = <Reader id={parts[1]} chapterId={parts[2]} />
   else if (parts[0] === 'library') page = <Library />
   else if (parts[0] === 'history') page = <History />
+  else if (parts[0] === 'profile') page = <Profile />
   else page = <Home />
 
   return <Shell>{page}</Shell>
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+// Reuse the root across HMR reloads
+const container = document.getElementById('root')
+const root = (container._reactRoot ||= ReactDOM.createRoot(container))
+root.render(
   <React.StrictMode>
     <App />
   </React.StrictMode>

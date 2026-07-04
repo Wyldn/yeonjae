@@ -40,7 +40,7 @@ export default function Home() {
   if (loading) return <div className="page"><ContinueRail /><Loading label="Loading fresh titles…" /></div>
   if (error) return <div className="page"><ContinueRail /><LoadError error={error} retry={retry} /></div>
 
-  const { trending, latest, topRated } = data
+  const { trending, latest, rising, topRated } = data
   const hero = trending[0]
 
   return (
@@ -76,6 +76,16 @@ export default function Home() {
               <TitleCard title={t} />
             </div>
           ))}
+        </div>
+      </section>
+
+      <section>
+        <div className="section-head">
+          <h2>Rising now</h2>
+          <Link to="/browse?sort=newest" className="see-all">See all →</Link>
+        </div>
+        <div className="rail">
+          {rising.map((t) => <TitleCard key={t.id} title={t} />)}
         </div>
       </section>
 

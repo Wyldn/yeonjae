@@ -18,8 +18,10 @@ let state = {
   progress: {},  // titleId -> { chapterId, chapterNum, page, pct, updatedAt, snap }
   history: [],   // [{ titleId, chapterId, chapterNum, at }] newest first
   settings: { mode: 'auto', width: 'comfort' },
+  profile: { name: 'Reader', emoji: '📖', since: Date.now() },
   ...load(),
 }
+state.profile ||= { name: 'Reader', emoji: '📖', since: Date.now() }
 
 const listeners = new Set()
 
@@ -71,5 +73,22 @@ export const store = {
 
   clearHistory() {
     commit({ ...state, history: [], progress: {} })
+  },
+
+  setProfile(patch) {
+    commit({ ...state, profile: { ...state.profile, ...patch } })
+  },
+
+  // Backup / restore of everything (localStorage is device-local)
+  export() {
+    return JSON.stringify(state, null, 2)
+  },
+
+  import(json) {
+    const data = JSON.parse(json)
+    if (!data || typeof data !== 'object' || !('library' in data)) {
+      throw new Error('Not a Yeonjae backup file')
+    }
+    commit({ ...state, ...data })
   },
 }

@@ -8,6 +8,7 @@ const TABS = [
   { to: '/browse', label: 'Browse', icon: 'M4 5h16M4 12h16M4 19h10' },
   { to: '/library', label: 'Library', icon: 'M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z' },
   { to: '/history', label: 'History', icon: 'M12 8v4l3 2M21 12a9 9 0 1 1-9-9 9 9 0 0 1 9 9z' },
+  { to: '/profile', label: 'Profile', icon: 'M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zM4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1' },
 ]
 
 function Icon({ d }) {

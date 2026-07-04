@@ -71,6 +71,7 @@ function normalize(m, statsMap = {}) {
     coverUrlLarge: coverFile ? `${COVERS}/${m.id}/${coverFile}.512.jpg` : null,
     updatedAt: a.updatedAt,
     lastChapter: a.lastChapter || null,
+    latestChapterId: a.latestUploadedChapter || null,
     rating: stats.rating?.bayesian ?? null,
     follows: stats.follows ?? null,
   }
@@ -138,12 +139,40 @@ async function fetchLatestUpdates(count = 18) {
 }
 
 export async function fetchHome() {
-  const [trending, latest, rated] = await Promise.all([
+  const threeMonthsAgo = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 19)
+  const [trending, latest, rising, rated] = await Promise.all([
     list({ followedCount: 'desc' }, {}, 12),
     fetchLatestUpdates(18),
+    // "rising": the most-followed titles added in the last 90 days
+    list({ followedCount: 'desc' }, { createdAtSince: threeMonthsAgo }, 12),
     list({ rating: 'desc' }, {}, 12),
   ])
-  return { trending: trending.items, latest, topRated: rated.items }
+  return { trending: trending.items, latest, rising: rising.items, topRated: rated.items }
+}
+
+// New-chapter feed for followed titles: resolve each title's latest uploaded
+// chapter in one batch call.
+export async function fetchFollowUpdates(ids) {
+  if (!ids.length) return []
+  const titles = await fetchByIds(ids)
+  const chIds = titles.map((t) => t.latestChapterId).filter(Boolean)
+  if (!chIds.length) return []
+  const res = await get('/chapter', { ids: chIds, limit: chIds.length, contentRating: CONTENT_RATINGS }, 60e3)
+  const byId = new Map(res.data.map((c) => [c.id, c.attributes]))
+  return titles
+    .map((t) => {
+      const ch = byId.get(t.latestChapterId)
+      if (!ch) return null
+      return {
+        title: t,
+        chapterId: t.latestChapterId,
+        chapterNum: ch.chapter ?? 'oneshot',
+        at: ch.readableAt,
+        readable: ch.pages > 0 && !ch.externalUrl && !ch.isUnavailable,
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => new Date(b.at) - new Date(a.at))
 }
 
 const SORT_ORDERS = {
