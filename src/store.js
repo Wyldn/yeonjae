@@ -25,6 +25,13 @@ state.profile ||= { name: 'Reader', emoji: '📖', since: Date.now() }
 
 const listeners = new Set()
 
+// Optional write-through hook, registered by sync.js when cloud sync is on.
+// Called after a mutation commits: (type, titleId, entry|null)
+let mutationHook = null
+export function setMutationHook(fn) {
+  mutationHook = fn
+}
+
 function commit(next) {
   state = next
   localStorage.setItem(KEY, JSON.stringify(state))
@@ -46,6 +53,7 @@ export const store = {
     if (library[snap.id]) delete library[snap.id]
     else library[snap.id] = { addedAt: Date.now(), snap }
     commit({ ...state, library })
+    mutationHook?.('follow', snap.id, library[snap.id] || null)
   },
 
   saveProgress(snap, chapter, page, pct) {
@@ -65,6 +73,7 @@ export const store = {
       ...state.history.filter((h) => h.chapterId !== chapter.id),
     ].slice(0, 100)
     commit({ ...state, progress, history })
+    mutationHook?.('progress', snap.id, progress[snap.id])
   },
 
   setSetting(key, value) {
@@ -73,6 +82,43 @@ export const store = {
 
   clearHistory() {
     commit({ ...state, history: [], progress: {} })
+    mutationHook?.('clearProgress')
+  },
+
+  // Merge cloud state into local (cloud wins on newer progress; follows are a
+  // union). Returns entries that exist only locally so the caller can push them.
+  mergeCloud(cloud) {
+    const library = { ...state.library }
+    const progress = { ...state.progress }
+    const cloudFollowIds = new Set()
+    const cloudProgressIds = new Set()
+
+    for (const f of cloud.follows) {
+      cloudFollowIds.add(f.title_id)
+      if (!library[f.title_id]) {
+        library[f.title_id] = { addedAt: new Date(f.added_at).getTime(), snap: f.snap }
+      }
+    }
+    for (const p of cloud.progress) {
+      cloudProgressIds.add(p.title_id)
+      const at = new Date(p.updated_at).getTime()
+      const local = progress[p.title_id]
+      if (!local || at > local.updatedAt) {
+        progress[p.title_id] = {
+          chapterId: p.chapter_id,
+          chapterNum: p.chapter_num,
+          page: p.page,
+          pct: p.pct,
+          updatedAt: at,
+          snap: p.snap,
+        }
+      }
+    }
+    commit({ ...state, library, progress })
+    return {
+      follows: Object.entries(library).filter(([id]) => !cloudFollowIds.has(id)),
+      progress: Object.entries(progress).filter(([id]) => !cloudProgressIds.has(id)),
+    }
   },
 
   setProfile(patch) {

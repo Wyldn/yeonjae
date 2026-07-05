@@ -1,7 +1,34 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useStore, store } from '../store.js'
+import { cloudEnabled, getAuthUser, subscribeAuth, signOut } from '../social.js'
+import AuthBox from '../components/AuthBox.jsx'
 
 const EMOJI = ['📖', '⚔️', '🌙', '🦊', '🌸', '👾', '🐉', '☕', '🎧', '🗡️']
+
+function AccountSection() {
+  const [user, setUser] = useState(getAuthUser())
+  useEffect(() => subscribeAuth(setUser), [])
+  if (!cloudEnabled) return null
+
+  return (
+    <section>
+      <div className="section-head"><h2>Account</h2></div>
+      {user ? (
+        <>
+          <p className="muted small">
+            Signed in as <strong>{user.user_metadata?.username || user.email}</strong> ({user.email}).
+            Your follows and reading progress sync to your account on every device you sign in on.
+          </p>
+          <div className="title-actions">
+            <button className="btn ghost" onClick={() => signOut()}>Sign out</button>
+          </div>
+        </>
+      ) : (
+        <AuthBox prompt="Sign in to sync your library and progress across devices." />
+      )}
+    </section>
+  )
+}
 
 export default function Profile() {
   const { profile, library, history, progress } = useStore()
@@ -99,6 +126,8 @@ export default function Profile() {
           </div>
         </section>
       )}
+
+      <AccountSection />
 
       <section>
         <div className="section-head"><h2>Your data</h2></div>

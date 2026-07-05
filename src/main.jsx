@@ -9,7 +9,10 @@ import Reader from './pages/Reader.jsx'
 import Library from './pages/Library.jsx'
 import History from './pages/History.jsx'
 import Profile from './pages/Profile.jsx'
+import { initSync } from './sync.js'
 import './styles.css'
+
+initSync()
 
 function App() {
   const { path } = useRoute()
